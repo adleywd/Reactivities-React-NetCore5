@@ -11,22 +11,13 @@ const ActivityDashboard: React.FC = () => {
   // Cleaner WAY, access directly the prop that will be used
   //const ActivityDashboard: React.FC<IProps> = (props) => { -- ONE WAY TO DO, passing props and use props.Activitiy
   const activityStore = useContext(ActivityStore);
-  const { editMode, selectedActivity } = activityStore;
+  const { editMode, activity: selectedActivity } = activityStore;
   return (
     <Grid>
       <Grid.Column width={10}>
         <ActivityList />
       </Grid.Column>
-      <Grid.Column width={6}>
-        {/* If selectedActivity is not null and EditMode is false then run this code: */}
-        {selectedActivity && !editMode && <ActivityDetails />}
-        {editMode && (
-          <ActivityForm
-            key={selectedActivity && (selectedActivity.id || 0)} // give a key so react know that activity has changed
-            activity={selectedActivity!}
-          />
-        )}
-      </Grid.Column>
+      <h2>ACtivity filters</h2>
     </Grid>
   );
 };

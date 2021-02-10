@@ -1,5 +1,6 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import { createContext, SyntheticEvent } from "react";
+import { textChangeRangeIsUnchanged } from "typescript";
 import agent from "../api/agent";
 import { IActivity } from "../models/activity";
 
@@ -11,7 +12,7 @@ class ActivityStore {
   /* Observables */
   activityRegistry = new Map();
   activities: IActivity[] = [];
-  selectedActivity: IActivity | undefined = undefined;
+  activity: IActivity | null = null;
   loadingInitial = false;
   editMode = false;
   submitting = false;
@@ -27,7 +28,6 @@ class ActivityStore {
   /* Actions */
   loadActivities = async () => {
     this.loadingInitial = true;
-
     // Using async and await
     try {
       const activities = await agent.Activities.list();
@@ -45,6 +45,31 @@ class ActivityStore {
       console.log(error);
     }
   };
+
+  loadActivity = async (id: string) => {
+    let activity = this.getActivity(id);
+    if (activity) {
+      this.activity = activity;
+    } else {
+      this.loadingInitial = true;
+      try {
+        activity = await agent.Activities.details(id);
+        runInAction(() => {
+          this.activity = activity;
+          this.loadingInitial = false;
+        });
+      } catch (error) {
+        runInAction(() => {
+          this.loadingInitial = false;
+        });
+        console.log(error);
+      }
+    }
+  };
+
+  clearActivity = () => {
+    this.activity = null;
+  }    
 
   createActivity = async (activity: IActivity) => {
     this.submitting = true;
@@ -112,16 +137,16 @@ class ActivityStore {
 
   openCreateForm = () => {
     this.editMode = true;
-    this.selectedActivity = undefined;
+    this.activity = null;
   };
 
   openEditForm = (id: string) => {
-    this.selectedActivity = this.activityRegistry.get(id);
+    this.activity = this.activityRegistry.get(id);
     this.editMode = true;
   };
 
   cancelSelectedActivity = () => {
-    this.selectedActivity = undefined;
+    this.activity = null;
   };
 
   cancelFormOpen = () => {
@@ -129,8 +154,13 @@ class ActivityStore {
   };
 
   selectActivty = (id: string) => {
-    this.selectedActivity = this.activityRegistry.get(id);
+    this.activity = this.activityRegistry.get(id);
     this.editMode = false;
+  };
+
+  // Helpers
+  getActivity = (id: string) => {
+    return this.activityRegistry.get(id);
   };
 }
 
